@@ -12,7 +12,7 @@ To Install
 ----------
 
 <pre>
-npm install git://github.com/kyungw00k/node-arduino.git
+npm install git://github.com/Tony-Pa/node-arduino.git
 </pre>
 
 To Use
@@ -34,7 +34,7 @@ myBoard.pinMode(7, arduino.INPUT);
 
 setInterval(function () {
   myBoard.digitalRead(7, function(data) {
-	console.log(data);
+    console.log(data);
   });
 }, 100);
 </pre>
