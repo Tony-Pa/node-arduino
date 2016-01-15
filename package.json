@@ -1,21 +1,40 @@
-{   "name" : "arduino",
-    "version" : "0.2.3",
-    "description" : "Control your Arduino with Node",
-    "author": "Tobias Schneider <schneider@uxebu.com>",
-    "main": "./lib/arduino",
-    "contributors": [ 
-        { "name": "Tobias Schneider", "email": "schneider@uxebu.com" },
-        { "name": "Chris Williams", "email": "voodootikigod@gmail.com" },
-        { "name": "Kyungwook, Park", "email": "parksama@gmail.com" },
-        { "name": "Anton Pashchenko", "email": "tony.pashchenko@gmail.com" }
-    ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/voodootikigod/node-arduino.git"
+{
+  "name": "node-arduino",
+  "version": "0.2.4",
+  "description": "Control your Arduino with Node",
+  "author": "Tobias Schneider <schneider@uxebu.com>",
+  "main": "./lib/arduino",
+  "contributors": [
+    {
+      "name": "Tobias Schneider",
+      "email": "schneider@uxebu.com"
     },
-	"dependencies": {
-        "serialport": ">= 0.2.2"
+    {
+      "name": "Chris Williams",
+      "email": "voodootikigod@gmail.com"
     },
-    "keywords": ["arduino", "serialport", "robots"],
-    "engines": { "node": ">= 0.4.0" }
+    {
+      "name": "Kyungwook, Park",
+      "email": "parksama@gmail.com"
+    },
+    {
+      "name": "Anton Pashchenko",
+      "email": "tony.pashchenko@gmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/voodootikigod/node-arduino.git"
+  },
+  "dependencies": {
+    "serialport": ">= 0.2.2"
+  },
+  "keywords": [
+    "arduino",
+    "serialport",
+    "robots"
+  ],
+  "engines": {
+    "node": ">= 0.4.0"
+  }
 }
