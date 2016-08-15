@@ -7,13 +7,13 @@
 
 #define SERIAL_BAUDRATE 115200
 
-#define OPC_PIN_MODE                 0x01
+#define OPC_PIN_MODE             0x01
 #define OPC_DIGITAL_READ         0x02
 #define OPC_DIGITAL_WRITE        0x03
-#define OPC_ANALOG_REFERENCE 0x04
-#define OPC_ANALOG_READ            0x05
+#define OPC_ANALOG_REFERENCE     0x04
+#define OPC_ANALOG_READ          0x05
 #define OPC_ANALOG_WRITE         0x06
-#define OPC_ANALOG_READ_AVERAGE         0x07
+#define OPC_ANALOG_READ_AVERAGE  0x07
 
 long pinVal = 0;
 long inpVal = 0;
@@ -76,13 +76,13 @@ void loop() {
                 int t;
                 for(int i = 1; i < count; i++)
                     for(int j = 0; j < count - i; j++)
-                        if(avArray[j] >= avArray[j+1]) {
+                        if(avArray[j] > avArray[j+1]) {
                             t = avArray[j];
                             avArray[j] = avArray[j + 1];
-                            avArray[j + 1]=t;
+                            avArray[j + 1] = t;
                         }
 
-                int center = count/2;
+                int center = count / 2;
                 inpVal = avArray[center];
                 outVal = pinVal << 16 | inpVal;
                 Serial.println(outVal);
