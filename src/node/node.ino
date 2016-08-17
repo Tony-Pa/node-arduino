@@ -1,10 +1,3 @@
-/*
- *    node-arduino: Control your Arduino with Node
- *
- *    Copyright (c) 2010 Tobias Schneider
- *    node-arduino is freely distributable under the terms of the MIT license.
- */
-
 #define SERIAL_BAUDRATE 115200
 
 #define OPC_PIN_MODE             0x01
@@ -26,6 +19,7 @@ void setup() {
 void loop() {
     pinVal = 0, inpVal = 0, outVal = 0;
     while (Serial.available() > 0) {
+      Serial.println('-');
     delay(1);
         switch (Serial.read()) {
             case OPC_PIN_MODE: {
