@@ -14,6 +14,7 @@
 #define OPC_PIN_MODE_DEFAULT     0x08
 #define OPC_READ_TEMP            0x09
 #define OPC_READ_TEMP_HUM        0x0A
+#define OPC_READ_LIGHT_STATUS    0x0B
 
 long pinVal = 0;
 long inpVal = 0;
