@@ -24,7 +24,7 @@ int SIG_pin2 = A7;
 int SIG_pin3 = 10;
 int SIG_pin4 = 11;
 
-int maxChannel = 32;
+int maxChannel = 31;
 int controlPinLight[] = {2, 3, 4, 5};
 int controlPinRelay[] = {6, 7, 8, 9};
 int muxChannel[16][4]={
@@ -112,13 +112,13 @@ void loop() {
         }
     }
     else {
-      if (millis() - timeM > 5000 / maxChannel) {
+      if (millis() - timeM > 2000 / (maxChannel - 1)) {
         inpVal = readMux(currentPin);
 
-        outVal = pinVal << 16 | inpVal;
+        outVal = currentPin << 16 | inpVal;
         Serial.println(outVal);
         currentPin++;
-        if (currentPin > maxChannel) {
+        if (currentPin >= maxChannel) {
           currentPin = 0;
         }
         timeM = millis();
@@ -147,7 +147,7 @@ int analogReadAverage(int pinVal, int count) {
 }
 
 int readMux(int _channel){
-    int channel = _channel - 1;
+    int channel = _channel;
 
     int SIG_pin = SIG_pin1;
     if (channel >= 16) {
@@ -164,7 +164,7 @@ int readMux(int _channel){
 }
 
 void readMuxDigital(int _channel, int value){
-    int channel = _channel - 1;
+    int channel = _channel;
 
     int SIG_pin = SIG_pin3;
     if (channel >= 16) {
