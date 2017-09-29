@@ -27,7 +27,7 @@
     "url": "https://github.com/voodootikigod/node-arduino.git"
   },
   "dependencies": {
-    "serialport": ">= 0.2.2"
+    "serialport": "^5.0.0"
   },
   "keywords": [
     "arduino",
