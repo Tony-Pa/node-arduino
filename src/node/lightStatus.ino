@@ -1,5 +1,7 @@
 #define SERIAL_BAUDRATE 115200
 
+#define timeDelta 2000
+
 #define OPC_PIN_MODE             0x01
 #define OPC_DIGITAL_READ         0x02
 #define OPC_DIGITAL_WRITE        0x03
@@ -12,21 +14,30 @@
 #define OPC_READ_TEMP_HUM        0x0A
 #define OPC_READ_LIGHT_STATUS    0x0B
 #define OPC_SET_LIGHT_RELAY      0x0C
+#define OPC_TOGGLE_RELAYS        0x0D
 
 long pinVal = 0;
 long inpVal = 0;
 long outVal = 0;
+
+const int dataPin1 = 8;
+const int latchPin1 = 7;
+const int clockPin1 = 6;
+
+const int dataPin2 = 9;
+const int latchPin2 = 10;
+const int clockPin2 = 11;
+
+unsigned int bitsToSend1 = 65535;
+unsigned int bitsToSend2 = 65535;
+
 long currentPin = 0;
 
 int SIG_pin1 = A6;
 int SIG_pin2 = A7;
 
-int SIG_pin3 = 10;
-int SIG_pin4 = 11;
-
-int maxChannel = 31;
+int maxChannel = 32;
 int controlPinLight[] = {2, 3, 4, 5};
-int controlPinRelay[] = {6, 7, 8, 9};
 int muxChannel[16][4]={
   {0,0,0,0}, //channel 0
   {1,0,0,0}, //channel 1
@@ -48,16 +59,24 @@ int muxChannel[16][4]={
 
 long timeM;
 void setup() {
+    pinMode(latchPin1, OUTPUT);
+    pinMode(dataPin1, OUTPUT);
+    pinMode(clockPin1, OUTPUT);
+    pinMode(latchPin2, OUTPUT);
+    pinMode(dataPin2, OUTPUT);
+    pinMode(clockPin2, OUTPUT);
+
     for(int i = 0; i < 4; i ++){
-        digitalWrite(controlPinLight[i], OUTPUT);
+        pinMode(controlPinLight[i], OUTPUT);
         digitalWrite(controlPinLight[i], LOW);
-        digitalWrite(controlPinRelay[i], OUTPUT);
-        digitalWrite(controlPinRelay[i], LOW);
     }
 
     Serial.begin(SERIAL_BAUDRATE);
 
     timeM = millis();
+
+    registerWrite(0, 1);
+    registerWrite(16, 1);
 }
 
 void loop() {
@@ -106,13 +125,24 @@ void loop() {
                 pinVal = Serial.read();
                 inpVal = Serial.read();
 
-                readMuxDigital(pinVal, inpVal);
+                registerWrite(pinVal, inpVal);
+                break;
+            }
+            case OPC_TOGGLE_RELAYS: {
+                delay(1);
+                inpVal = Serial.read();
+                long length = Serial.read();
+
+                for (int i = 0; i < length; i++) {
+                    pinVal = Serial.read();
+                    registerWrite(pinVal, inpVal);
+                }
                 break;
             }
         }
     }
     else {
-      if (millis() - timeM > 2000 / (maxChannel - 1)) {
+      if (millis() - timeM > timeDelta / (maxChannel - 1)) {
         inpVal = readMux(currentPin);
 
         outVal = currentPin << 16 | inpVal;
@@ -148,7 +178,6 @@ int analogReadAverage(int pinVal, int count) {
 
 int readMux(int _channel){
     int channel = _channel;
-
     int SIG_pin = SIG_pin1;
     if (channel >= 16) {
         channel -= 16;
@@ -159,22 +188,33 @@ int readMux(int _channel){
         digitalWrite(controlPinLight[i], muxChannel[channel][i]);
     }
 
-    int val = analogReadAverage(SIG_pin, 10);
-    return val;
+    return analogRead(SIG_pin);
 }
 
-void readMuxDigital(int _channel, int value){
-    int channel = _channel;
+void registerWrite(int whichPin, int whichState) {
+  int channel = whichPin;
+  if (channel >= 16) {
+    channel -= 16;
+    digitalWrite(latchPin2, LOW);
+    bitWrite(bitsToSend2, channel, whichState);
 
-    int SIG_pin = SIG_pin3;
-    if (channel >= 16) {
-        channel -= 16;
-        SIG_pin = SIG_pin4;
-    }
+    byte registerOne = highByte(bitsToSend2);
+    byte registerTwo = lowByte(bitsToSend2);
 
-    for(int i = 0; i < 4; i ++){
-        digitalWrite(controlPinLight[i], muxChannel[channel][i]);
-    }
+    shiftOut(dataPin2, clockPin2, MSBFIRST, registerOne);
+    shiftOut(dataPin2, clockPin2, MSBFIRST, registerTwo);
 
-    digitalWrite(SIG_pin, value);
+    digitalWrite(latchPin2, HIGH);
+  }
+  else {
+    digitalWrite(latchPin1, LOW);
+    bitWrite(bitsToSend1, channel, whichState);
+
+    byte registerOne = highByte(bitsToSend1);
+    byte registerTwo = lowByte(bitsToSend1);
+
+    shiftOut(dataPin1, clockPin1, MSBFIRST, registerOne);
+    shiftOut(dataPin1, clockPin1, MSBFIRST, registerTwo);
+    digitalWrite(latchPin1, HIGH);
+  }
 }
