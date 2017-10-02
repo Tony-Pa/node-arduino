@@ -13,23 +13,12 @@
 #define OPC_READ_TEMP            0x09
 #define OPC_READ_TEMP_HUM        0x0A
 #define OPC_READ_LIGHT_STATUS    0x0B
-#define OPC_SET_LIGHT_RELAY      0x0C
+#define OPC_TOGGLE_RELAY         0x0C
 #define OPC_TOGGLE_RELAYS        0x0D
 
 long pinVal = 0;
 long inpVal = 0;
 long outVal = 0;
-
-const int dataPin1 = 8;
-const int latchPin1 = 7;
-const int clockPin1 = 6;
-
-const int dataPin2 = 9;
-const int latchPin2 = 10;
-const int clockPin2 = 11;
-
-unsigned int bitsToSend1 = 65535;
-unsigned int bitsToSend2 = 65535;
 
 long currentPin = 0;
 
@@ -59,12 +48,10 @@ int muxChannel[16][4]={
 
 long timeM;
 void setup() {
-    pinMode(latchPin1, OUTPUT);
-    pinMode(dataPin1, OUTPUT);
-    pinMode(clockPin1, OUTPUT);
-    pinMode(latchPin2, OUTPUT);
-    pinMode(dataPin2, OUTPUT);
-    pinMode(clockPin2, OUTPUT);
+    for (int i = 22; i< 55; i++) {
+        pinMode(i, OUTPUT);
+        digitalWrite(i, HIGH);
+    }
 
     for(int i = 0; i < 4; i ++){
         pinMode(controlPinLight[i], OUTPUT);
@@ -74,9 +61,6 @@ void setup() {
     Serial.begin(SERIAL_BAUDRATE);
 
     timeM = millis();
-
-    registerWrite(0, 1);
-    registerWrite(16, 1);
 }
 
 void loop() {
@@ -99,17 +83,6 @@ void loop() {
                 Serial.println(outVal);
                 break;
             }
-            case OPC_ANALOG_READ_AVERAGE: {
-                delay(1);
-                pinVal = Serial.read();
-                int count = Serial.read();
-
-                inpVal = analogReadAverage(pinVal, count);
-
-                outVal = pinVal << 16 | inpVal;
-                Serial.println(outVal);
-                break;
-            }
             case OPC_READ_LIGHT_STATUS: {
                 delay(1);
                 pinVal = Serial.read();
@@ -120,22 +93,33 @@ void loop() {
                 Serial.println(outVal);
                 break;
             }
-            case OPC_SET_LIGHT_RELAY: {
+            case OPC_TOGGLE_RELAY: {
                 delay(1);
-                pinVal = Serial.read();
                 inpVal = Serial.read();
 
-                registerWrite(pinVal, inpVal);
+                digitalWrite(inpVal, LOW);
+
+                delay(200);
+
+                digitalWrite(inpVal, HIGH);
                 break;
             }
             case OPC_TOGGLE_RELAYS: {
                 delay(1);
                 inpVal = Serial.read();
                 long length = Serial.read();
+                int pins[length];
 
                 for (int i = 0; i < length; i++) {
                     pinVal = Serial.read();
-                    registerWrite(pinVal, inpVal);
+                    pins[i] = pinVal;
+                    digitalWrite(inpVal, LOW);
+                }
+
+                delay(200);
+
+                for (int i = 0; i < length; i++) {
+                    digitalWrite(pins[i], HIGH);
                 }
                 break;
             }
@@ -156,26 +140,6 @@ void loop() {
     }
 }
 
-int analogReadAverage(int pinVal, int count) {
-  int avArray[count];
-  for (int i = 0; i < count; i++) {
-      avArray[i] = analogRead(pinVal);
-      delay(1);
-  }
-
-  int t;
-  for(int i = 1; i < count; i++)
-      for(int j = 0; j < count - i; j++)
-          if(avArray[j] > avArray[j+1]) {
-              t = avArray[j];
-              avArray[j] = avArray[j + 1];
-              avArray[j + 1] = t;
-          }
-
-  int center = count / 2;
-  return avArray[center];
-}
-
 int readMux(int _channel){
     int channel = _channel;
     int SIG_pin = SIG_pin1;
@@ -189,32 +153,4 @@ int readMux(int _channel){
     }
 
     return analogRead(SIG_pin);
-}
-
-void registerWrite(int whichPin, int whichState) {
-  int channel = whichPin;
-  if (channel >= 16) {
-    channel -= 16;
-    digitalWrite(latchPin2, LOW);
-    bitWrite(bitsToSend2, channel, whichState);
-
-    byte registerOne = highByte(bitsToSend2);
-    byte registerTwo = lowByte(bitsToSend2);
-
-    shiftOut(dataPin2, clockPin2, MSBFIRST, registerOne);
-    shiftOut(dataPin2, clockPin2, MSBFIRST, registerTwo);
-
-    digitalWrite(latchPin2, HIGH);
-  }
-  else {
-    digitalWrite(latchPin1, LOW);
-    bitWrite(bitsToSend1, channel, whichState);
-
-    byte registerOne = highByte(bitsToSend1);
-    byte registerTwo = lowByte(bitsToSend1);
-
-    shiftOut(dataPin1, clockPin1, MSBFIRST, registerOne);
-    shiftOut(dataPin1, clockPin1, MSBFIRST, registerTwo);
-    digitalWrite(latchPin1, HIGH);
-  }
 }
