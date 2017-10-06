@@ -1,3 +1,10 @@
+/*
+ *  node-arduino: Control your Arduino with Node
+ *
+ *  Copyright (c) 2017 Anton Pashchenko
+ *  node-arduino is freely distributable under the terms of the MIT license.
+ */
+
 #define SERIAL_BAUDRATE 115200
 
 #define timeDelta 2000
@@ -113,7 +120,7 @@ void loop() {
                 for (int i = 0; i < length; i++) {
                     pinVal = Serial.read();
                     pins[i] = pinVal;
-                    digitalWrite(inpVal, LOW);
+                    digitalWrite(pinVal, LOW);
                 }
 
                 delay(200);

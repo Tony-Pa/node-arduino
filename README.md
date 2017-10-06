@@ -20,21 +20,19 @@ To Use
 * Opening an arduino board:
 
 <pre>
-var arduino = require("arduino") 
-  , myBoard = arduino.connect("/dev/tty-usbserial1");
+const arduino = require("arduino");
+const myBoard = arduino.connect("/dev/tty-usbserial1");
 </pre>
 
 * Getting pin 7 digital value
 
 <pre>
-var arduino = require("arduino")
-  , myBoard = arduino.connect("/dev/tty-usbserial1");
+const arduino = require("arduino");
+const myBoard = arduino.connect("/dev/tty-usbserial1");
 
 myBoard.pinMode(7, arduino.INPUT);
 
-setInterval(function () {
-  myBoard.digitalRead(7, function(data) {
-    console.log(data);
-  });
+setInterval(() => {
+  myBoard.digitalRead(7, (data) => console.log(data));
 }, 100);
 </pre>
