@@ -5,9 +5,10 @@
  *  node-arduino is freely distributable under the terms of the MIT license.
  */
 
-#define SERIAL_BAUDRATE 115200
+#define SERIAL_BAUDRATE          115200
 
-#define timeDelta 2000
+#define MAX_CHANEL               32
+#define THRESHOLD_LIGHT_VALUE    400
 
 #define OPC_PIN_MODE             0x01
 #define OPC_DIGITAL_READ         0x02
@@ -22,6 +23,8 @@
 #define OPC_READ_LIGHT_STATUS    0x0B
 #define OPC_TOGGLE_RELAY         0x0C
 #define OPC_TOGGLE_RELAYS        0x0D
+#define OPC_SET_MOTION_WATCH     0x0E
+#define OPC_HEALTH_CHECK         0x10
 
 long pinVal = 0;
 long inpVal = 0;
@@ -32,25 +35,24 @@ long currentPin = 0;
 int SIG_pin1 = A6;
 int SIG_pin2 = A7;
 
-int maxChannel = 32;
 int controlPinLight[] = {2, 3, 4, 5};
-int muxChannel[16][4]={
-  {0,0,0,0}, //channel 0
-  {1,0,0,0}, //channel 1
-  {0,1,0,0}, //channel 2
-  {1,1,0,0}, //channel 3
-  {0,0,1,0}, //channel 4
-  {1,0,1,0}, //channel 5
-  {0,1,1,0}, //channel 6
-  {1,1,1,0}, //channel 7
-  {0,0,0,1}, //channel 8
-  {1,0,0,1}, //channel 9
-  {0,1,0,1}, //channel 10
-  {1,1,0,1}, //channel 11
-  {0,0,1,1}, //channel 12
-  {1,0,1,1}, //channel 13
-  {0,1,1,1}, //channel 14
-  {1,1,1,1}  //channel 15
+int muxChannel[16][4] = {
+    {0,0,0,0}, //channel 0
+    {1,0,0,0}, //channel 1
+    {0,1,0,0}, //channel 2
+    {1,1,0,0}, //channel 3
+    {0,0,1,0}, //channel 4
+    {1,0,1,0}, //channel 5
+    {0,1,1,0}, //channel 6
+    {1,1,1,0}, //channel 7
+    {0,0,0,1}, //channel 8
+    {1,0,0,1}, //channel 9
+    {0,1,0,1}, //channel 10
+    {1,1,0,1}, //channel 11
+    {0,0,1,1}, //channel 12
+    {1,0,1,1}, //channel 13
+    {0,1,1,1}, //channel 14
+    {1,1,1,1}  //channel 15
 };
 
 long timeM;
@@ -73,8 +75,13 @@ void setup() {
 void loop() {
     pinVal = 0, inpVal = 0, outVal = 0;
     if (Serial.available() > 0) {
-    delay(1);
+        delay(1);
         switch (Serial.read()) {
+            case OPC_HEALTH_CHECK: {
+                delay(1);
+                Serial.println("hc/");
+                break;
+            }
             case OPC_PIN_MODE: {
                 delay(1);
                 pinVal = Serial.read();
@@ -116,16 +123,18 @@ void loop() {
                 inpVal = Serial.read();
                 long length = Serial.read();
                 int pins[length];
+                int i;
 
-                for (int i = 0; i < length; i++) {
+                for (i = 0; i < length; i++) {
                     pinVal = Serial.read();
                     pins[i] = pinVal;
                     digitalWrite(pinVal, LOW);
+                    delay(1);
                 }
 
                 delay(200);
 
-                for (int i = 0; i < length; i++) {
+                for (i = 0; i < length; i++) {
                     digitalWrite(pins[i], HIGH);
                 }
                 break;
@@ -133,17 +142,20 @@ void loop() {
         }
     }
     else {
-      if (millis() - timeM > timeDelta / (maxChannel - 1)) {
         inpVal = readMux(currentPin);
 
-        outVal = currentPin << 16 | inpVal;
-        Serial.println(outVal);
-        currentPin++;
-        if (currentPin >= maxChannel) {
-          currentPin = 0;
+        int tmp = inpVal > THRESHOLD_LIGHT_VALUE ? 1 : 0;
+
+        if (tmp) {
+            outVal = currentPin << 16 | tmp;
+            Serial.println(outVal);
         }
-        timeM = millis();
-      }
+
+        currentPin++;
+
+        if (currentPin >= MAX_CHANEL) {
+            currentPin = 0;
+        }
     }
 }
 
