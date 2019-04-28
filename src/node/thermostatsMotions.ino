@@ -2,7 +2,8 @@
 #include "DallasTemperature.h"
 #include "OneWire.h"
 
-#define SERIAL_BAUDRATE 115200
+#define SERIAL_BAUDRATE          115200
+#define MOTION_SENSORS_NUMBER    1
 
 #define OPC_PIN_MODE             0x01
 #define OPC_DIGITAL_READ         0x02
@@ -21,16 +22,20 @@
 #define OPC_HEALTH_CHECK         0x10
 
 int currentMS = 1;
-int motionSensorsNumber = 1;
-int motionSensors[] = {12};
-//long motionSensorsValue[] = {1};
+int motionSensors[MOTION_SENSORS_NUMBER] = {12};
+int motionSensorsValue[MOTION_SENSORS_NUMBER] = {1};
 
 long pinVal = 0;
 long inpVal = 0;
 long outVal = 0;
 
+int timeDelta = 500;
+long timeM;
+
 void setup() {
     Serial.begin(SERIAL_BAUDRATE);
+
+    timeM = millis();
 }
 
 void loop() {
@@ -169,12 +174,17 @@ void loop() {
         }
     }
     else {
-        pinVal = motionSensors[currentMS];
-        inpVal = digitalRead(pinVal);
+        if (millis() - timeM > timeDelta / MOTION_SENSORS_NUMBER) {
+            pinVal = motionSensors[currentMS];
+            int tmp = digitalRead(pinVal);
 
-        if (!inpVal) {
-            outVal = pinVal << 16 | 1;
-            Serial.println(outVal);
+            if (tmp != motionSensorsValue[currentMS]) {
+                motionSensorsValue[currentMS] = tmp;
+                outVal = pinVal << 16 | tmp;
+                Serial.println(outVal);
+            }
+
+            timeM = millis();
         }
     }
 }

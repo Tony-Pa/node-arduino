@@ -7,7 +7,7 @@
 
 #define SERIAL_BAUDRATE          115200
 
-#define MAX_CHANEL               32
+#define MAX_CHANEL               31
 #define THRESHOLD_LIGHT_VALUE    400
 
 #define OPC_PIN_MODE             0x01
@@ -55,6 +55,8 @@ int muxChannel[16][4] = {
     {1,1,1,1}  //channel 15
 };
 
+int lightStatus[MAX_CHANEL];
+int timeDelta = 800;
 long timeM;
 void setup() {
     for (int i = 22; i< 55; i++) {
@@ -95,6 +97,13 @@ void loop() {
                 inpVal = analogRead(pinVal);
                 outVal = pinVal << 16 | inpVal;
                 Serial.println(outVal);
+                break;
+            }
+            case OPC_ANALOG_WRITE: {
+                delay(1);
+                inpVal = Serial.read();
+                outVal = Serial.read();
+                analogWrite(inpVal, outVal);
                 break;
             }
             case OPC_READ_LIGHT_STATUS: {
@@ -142,19 +151,24 @@ void loop() {
         }
     }
     else {
-        inpVal = readMux(currentPin);
+        if (millis() - timeM > timeDelta / MAX_CHANEL) {
+            inpVal = readMux(currentPin);
 
-        int tmp = inpVal > THRESHOLD_LIGHT_VALUE ? 1 : 0;
+            int tmp = inpVal > THRESHOLD_LIGHT_VALUE ? 1 : 0;
 
-        if (tmp) {
-            outVal = currentPin << 16 | tmp;
-            Serial.println(outVal);
-        }
+            if (tmp != lightStatus[currentPin]) {
+                lightStatus[currentPin] = tmp;
+                outVal = currentPin << 16 | tmp;
+                Serial.println(outVal);
+            }
 
-        currentPin++;
+            currentPin++;
 
-        if (currentPin >= MAX_CHANEL) {
-            currentPin = 0;
+            if (currentPin >= MAX_CHANEL) {
+                currentPin = 0;
+            }
+
+            timeM = millis();
         }
     }
 }
